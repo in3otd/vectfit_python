@@ -20,7 +20,6 @@ All credit goes to Bjorn Gustavsen for his MATLAB implementation, and the follow
 __author__ = 'Phil Reinhold'
 from pylab import *
 from numpy.linalg import pinv, eigvals, cond, norm
-import scipy.io as sio
 
 def cc(z):
     return z.conjugate()
@@ -68,25 +67,24 @@ def vectfit_step(f, s, poles):
 
     A[:, N] = 1
     A[:, N+1] = s
-    #sio.savemat('A.mat', mdict={'A': A})
-    #print A
 
-    # Solve Ax == b using pseudo-inverse
+    # Solve Ax == b
     b = f
     A = vstack((real(A), imag(A)))
     b = concatenate((real(b), imag(b)))
 
+    # scale the matrix to improve its condition number
     sc = norm(A, None,0)
-    A = A / sc # scale the matrix
+    A = A / sc 
     #print ('Cond. number = %e' % cond(A))
     #x = dot(pinv(A), b)
     x = lstsq(A, b)[0]
-    x[:] = x[:] / sc # scale the solution
-    sio.savemat('x.mat', mdict={'x': x})
+    # scale the solution
+    x[:] = x[:] / sc 
+
     residues = x[:N]
     d = x[N]
     h = x[N+1]
-    print "C(n) =", x
     # We only want the "tilde" part in (A.4)
     x = x[-N:]
     
@@ -108,7 +106,6 @@ def vectfit_step(f, s, poles):
     H = A - outer(b, c)
     H = real(H)
     new_poles = sort(eigvals(H))
-    sio.savemat('zer.mat', mdict={'new_poles': new_poles})
     unstable = real(new_poles) > 0
     new_poles[unstable] -= 2*real(new_poles)[unstable]
     return new_poles
@@ -146,12 +143,14 @@ def calculate_residues(f, s, poles):
     A = vstack((real(A), imag(A)))
     b = concatenate((real(b), imag(b)))
 
+    # scale the matrix to improve its condition number
     sc = norm(A, None,0)
-    A = A / sc # scale the matrix
+    A = A / sc
     #print ('Cond. number = %e' % cond(A))
     #x = dot(pinv(A), b)
     x = lstsq(A, b)[0]
-    x[:] = x[:] / sc # scale the solution
+    # scale the solution    
+    x[:] = x[:] / sc
     
     # Recover complex values
     x = np.complex64(x)
